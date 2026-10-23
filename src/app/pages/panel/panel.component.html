@@ -1,0 +1,106 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Últimos 6 meses</p>
+      <h1 class="page-header__title">Panel ejecutivo</h1>
+      <p class="page-header__subtitle">
+        Cómo va el negocio, dónde se está apretando la producción y qué viene el próximo mes.
+      </p>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <article class="card kpi-card" *ngFor="let kpi of kpis">
+      <p class="kpi-card__label">{{ kpi.label }}</p>
+      <p class="kpi-card__valor">{{ kpi.valor }}</p>
+      <p class="kpi-card__detalle">{{ kpi.detalle }}</p>
+    </article>
+  </div>
+
+  <div class="fila fila--ancha">
+    <article class="card">
+      <h2>Tendencia de ingresos</h2>
+      <p class="nota">Millones de pesos por mes. El ultimo punto es el mes actual, con los pedidos del sistema.</p>
+      <svg class="grafica" [attr.viewBox]="'0 0 ' + graficaAncho + ' ' + graficaAlto">
+        <path class="grafica__area" [attr.d]="area" />
+        <path class="grafica__linea" [attr.d]="linea" />
+        <g *ngFor="let p of puntos">
+          <circle class="grafica__punto" [attr.cx]="p.x" [attr.cy]="p.y" r="5" />
+          <text class="grafica__valor" [attr.x]="p.x" [attr.y]="p.y - 12">{{ p.valor }}</text>
+          <text class="grafica__mes" [attr.x]="p.x" [attr.y]="graficaAlto - 6">{{ p.mes }}</text>
+        </g>
+      </svg>
+    </article>
+
+    <article class="card conversion">
+      <h2>Conversión de la IA</h2>
+      <p class="nota">De lo que interpretó la Captura, cuánto se volvió pedido.</p>
+      <svg class="donut" viewBox="0 0 140 140">
+        <circle class="donut__fondo" cx="70" cy="70" r="54" />
+        <circle class="donut__valor" cx="70" cy="70" r="54" [attr.stroke-dasharray]="dash" transform="rotate(-90 70 70)" />
+        <text class="donut__texto" x="70" y="78">{{ conversion }}%</text>
+      </svg>
+      <p class="conversion__detalle">{{ confirmadas }} de {{ interpretaciones }} interpretaciones se confirmaron.</p>
+    </article>
+  </div>
+
+  <div class="fila fila--pareja">
+    <article class="card">
+      <h2>Uso de capacidad por recurso</h2>
+      <p class="nota">Dia mas cargado de cada semana, tomando la Agenda.</p>
+      <div class="uso" *ngFor="let recurso of recursos">
+        <p class="uso__nombre">{{ recurso.nombre }}</p>
+        <div class="uso__barras">
+          <div class="uso__col" *ngFor="let valor of recurso.semanas; let i = index">
+            <div class="uso__caja">
+              <div class="uso__relleno" [ngClass]="'uso--' + claseUso(valor)" [style.height.%]="valor"></div>
+            </div>
+            <span class="uso__etiqueta">{{ etiquetasSemana[i] }} · {{ valor }}%</span>
+          </div>
+        </div>
+      </div>
+      <div class="cuello">
+        Cuello de botella: <strong>{{ cuello.nombre }}</strong> {{ cuello.detalle }}.
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>Productos más rentables</h2>
+      <p class="nota">Margen de ganancia por línea de producto.</p>
+      <div class="producto" *ngFor="let p of productos">
+        <div class="producto__cabecera">
+          <span>{{ p.nombre }}</span>
+          <span class="producto__margen">{{ p.margen }}%</span>
+        </div>
+        <div class="barra">
+          <div class="barra__relleno" [style.width.%]="p.margen"></div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <article class="card proyeccion">
+    <div>
+      <h2>Proyección de demanda</h2>
+      <p class="nota">Si el ritmo de los últimos meses se mantiene, el próximo mes entrarían:</p>
+      <p class="proyeccion__numero">{{ proyeccion }} <span>pedidos</span></p>
+      <p class="proyeccion__metodo">Cálculo: pedidos del último mes + promedio de crecimiento de los últimos 3 meses.</p>
+    </div>
+    <div class="proyeccion__barras">
+      <div class="pbarra" *ngFor="let p of historialPedidos">
+        <span class="pbarra__valor">{{ p.valor }}</span>
+        <div class="pbarra__caja">
+          <div class="pbarra__relleno" [style.height.%]="(p.valor / maxPedidos) * 100"></div>
+        </div>
+        <span class="pbarra__mes">{{ p.mes }}</span>
+      </div>
+      <div class="pbarra pbarra--proyectada">
+        <span class="pbarra__valor">{{ proyeccion }}</span>
+        <div class="pbarra__caja">
+          <div class="pbarra__relleno" [style.height.%]="(proyeccion / maxPedidos) * 100"></div>
+        </div>
+        <span class="pbarra__mes">Próx.</span>
+      </div>
+    </div>
+  </article>
+</section>

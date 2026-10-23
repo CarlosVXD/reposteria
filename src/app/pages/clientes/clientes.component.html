@@ -1,0 +1,28 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">48 clientes registrados</p>
+      <h1 class="page-header__title">Clientes</h1>
+      <p class="page-header__subtitle">
+        Quiénes te compran, con qué frecuencia y cuándo fue la última vez que pidieron algo.
+      </p>
+    </div>
+    <button class="btn btn--primary" type="button">+ Nuevo cliente</button>
+  </header>
+
+  <input class="toolbar__search" type="text" placeholder="Buscar cliente por nombre o teléfono…" />
+
+  <div class="clientes-grid">
+    <article class="card cliente-card" *ngFor="let cliente of clientes">
+      <div class="cliente-card__avatar">{{ cliente.iniciales }}</div>
+      <div class="cliente-card__info">
+        <p class="cliente-card__nombre">{{ cliente.nombre }}</p>
+        <p class="cliente-card__telefono">{{ cliente.telefono }}</p>
+      </div>
+      <div class="cliente-card__stats">
+        <span>{{ cliente.pedidos }} pedidos</span>
+        <span class="cliente-card__ultimo">Último: {{ cliente.ultimoPedido }}</span>
+      </div>
+    </article>
+  </div>
+</section>

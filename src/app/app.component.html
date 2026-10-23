@@ -1,0 +1,8 @@
+<div class="app-shell">
+  <app-sidebar></app-sidebar>
+  <main class="app-content">
+    <div [@routeFade]="getRouteAnimationState(outlet)">
+      <router-outlet #outlet="outlet"></router-outlet>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,116 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Próximos 14 días</p>
+      <h1 class="page-header__title">Agenda de capacidad</h1>
+      <p class="page-header__subtitle">
+        Elige un día, simula un pedido y mira si tu horno, tu decoración y tu personal alcanzan.
+      </p>
+    </div>
+  </header>
+  <div class="confirmado" *ngIf="confirmado">
+    <div>
+      <p class="confirmado__titulo">Pedido {{ confirmado.id }} confirmado</p>
+      <p class="confirmado__detalle">{{ confirmado.cliente }} · {{ confirmado.producto }}</p>
+      <p class="confirmado__nota">
+        Agendado el {{ fechaLarga(confirmado.fecha) }} por {{ pesos(confirmado.precio) }}. Ya aparece en Pedidos y
+        cuenta en el Panel.
+      </p>
+    </div>
+    <a class="btn btn--ghost" routerLink="/pedidos">Ver en Pedidos</a>
+  </div>
+
+  <div class="pedido-captura" *ngIf="pedido">
+    <div>
+      <p class="pedido-captura__titulo">Pedido de {{ pedido.cliente }}, recibido desde Captura</p>
+      <p class="pedido-captura__detalle">
+        {{ pedido.sabor }} · {{ pedido.tamano }} · {{ pedido.diseno }} · {{ pedido.fechaTexto }}
+      </p>
+      <p class="pedido-captura__nota">
+        Complejidad estimada: <strong>{{ pedido.complejidad }}</strong>. Puedes cambiarla abajo si no te parece.
+      </p>
+      <p class="pedido-captura__aviso" *ngIf="avisoFecha">{{ avisoFecha }}</p>
+    </div>
+    <button type="button" class="btn btn--ghost" (click)="descartarPedido()">Descartar</button>
+  </div>
+
+  <div class="calendario">
+    <button type="button" class="dia" *ngFor="let dia of dias; let i = index"
+      [class.dia--activo]="i === indiceSeleccionado" (click)="seleccionar(i)">
+      <span class="dia__etiqueta">{{ diaCorto(dia.fecha) }}</span>
+      <span class="dia__numero">{{ dia.fecha.getDate() }}</span>
+      <span class="dia__pastilla" [ngClass]="'dia__pastilla--' + estado(dia)">{{ ocupacion(dia) }}%</span>
+    </button>
+  </div>
+
+  <div class="simulador">
+    <article class="card">
+      <h2>Simular un pedido nuevo</h2>
+      <p class="nota">Para el {{ fechaLarga(diaActual.fecha) }}</p>
+
+      <label class="campo" for="complejidad">Complejidad del pedido</label>
+      <select id="complejidad" class="campo__select" [ngModel]="complejidad"
+        (ngModelChange)="cambiarComplejidad($event)">
+        <option *ngFor="let c of complejidades" [value]="c">{{ c }}</option>
+      </select>
+
+      <button class="btn btn--primary" type="button" (click)="comprobar()">Comprobar disponibilidad</button>
+
+      <div class="resultado" *ngIf="resultado as r">
+        <div class="mensaje mensaje--ok" *ngIf="r.verificacion.cabe">
+          Hay capacidad. El pedido cabe el {{ fechaLarga(r.fecha) }}.
+        </div>
+        <div class="confirmar" *ngIf="r.verificacion.cabe && pedido">
+          <div>
+            <p class="confirmar__titulo">Precio sugerido</p>
+            <p class="confirmar__precio">{{ pesos(precioSugerido) }}</p>
+            <p class="confirmar__nota">Costo con los precios de hoy y un margen de {{ margenObjetivo }}%.</p>
+          </div>
+          <button class="btn btn--primary" type="button" (click)="confirmar()">Confirmar pedido</button>
+        </div>
+
+        <ng-container *ngIf="!r.verificacion.cabe">
+          <div class="mensaje mensaje--error">
+            <p>No hay capacidad para un pedido {{ complejidad }} el {{ fechaLarga(r.fecha) }}.</p>
+            <ul>
+              <li *ngFor="let f of r.verificacion.faltantes">
+                <strong>{{ f.nombre }}:</strong> necesita {{ f.necesita }} h y quedan {{ f.quedan }} h
+              </li>
+            </ul>
+          </div>
+
+          <div class="sugerencia" *ngIf="r.sugerencia; else sinSugerencia">
+            <p class="sugerencia__titulo">Fecha viable más cercana</p>
+            <p class="sugerencia__fecha">{{ fechaLarga(r.sugerencia.fecha) }}</p>
+            <button class="btn btn--primary" type="button" (click)="usarSugerencia(r.sugerencia)">
+              Usar esta fecha
+            </button>
+          </div>
+          <ng-template #sinSugerencia>
+            <div class="mensaje mensaje--error">No hay ninguna fecha viable en los próximos 14 días.</div>
+          </ng-template>
+        </ng-container>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>Recursos de ese día</h2>
+      <p class="nota">Un pedido {{ complejidad }} necesitaría lo que ves marcado abajo.</p>
+
+      <div class="recurso" *ngFor="let r of recursos">
+        <div class="recurso__cabecera">
+          <span class="recurso__nombre">{{ nombres[r] }}</span>
+          <span class="recurso__valor">{{ diaActual.usado[r] }} / {{ capacidad[r] }} h</span>
+        </div>
+        <div class="recurso__barra">
+          <div class="recurso__relleno" [class.recurso__relleno--critico]="!alcanza(r)" [style.width.%]="porcentaje(r)">
+          </div>
+        </div>
+        <p class="recurso__pedido" [class.recurso__pedido--critico]="!alcanza(r)">
+          El pedido necesita {{ consumo[complejidad][r] }} h
+          {{ alcanza(r) ? '· alcanza' : '· no alcanza' }}
+        </p>
+      </div>
+    </article>
+  </div>
+</section>

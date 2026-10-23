@@ -1,0 +1,198 @@
+// ==========================================================================
+// Repostería — Sistema de diseño global
+// Paleta: verde salvia pastel + crema cálido + acento rosa glaseado
+// ==========================================================================
+
+:root {
+  // --- Color ---
+  --color-bg: #FAF7F0;              // crema cálido, fondo principal
+  --color-surface: #FFFFFF;         // tarjetas / superficies
+  --color-surface-alt: #F1EDE2;     // superficie secundaria (hover, chips)
+  --color-sidebar: #66cc67;         // verde bosque oscuro, barra lateral
+  --color-sidebar-active: #71d772;  // verde activo dentro del sidebar
+  --color-primary: #8FAE84;         // verde salvia pastel, color de marca
+  --color-primary-deep: #566B4C;    // verde profundo, texto sobre pastel
+  --color-accent: #E3A9AE;          // rosa glaseado, acento cálido
+  --color-accent-deep: #B5717A;     // rosa profundo para texto/iconos
+  --color-ink: #2B2A24;             // texto principal, casi negro cálido
+  --color-ink-soft: #6B6A5F;        // texto secundario
+  --color-line: #E4DFD1;            // líneas divisorias sutiles
+
+  // --- Tipografía ---
+  --font-display: 'Fraunces', serif;
+  --font-ui: 'Manrope', sans-serif;
+
+  // --- Radios y sombras ---
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --shadow-soft: 0 1px 2px rgba(43, 42, 36, 0.04), 0 8px 24px rgba(43, 42, 36, 0.06);
+
+  // --- Movimiento ---
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  margin: 0;
+  font-weight: 500;
+}
+
+p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+}
+
+// Respeta preferencia de movimiento reducido
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Foco visible para accesibilidad de teclado
+:focus-visible {
+  outline: 2px solid var(--color-accent-deep);
+  outline-offset: 2px;
+}
+
+// ==========================================================================
+// Utilidades compartidas entre páginas
+// ==========================================================================
+
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 56px 64px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.page-header__eyebrow {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary-deep);
+  margin: 0 0 6px;
+}
+
+.page-header__title {
+  font-size: 32px;
+}
+
+.page-header__subtitle {
+  color: var(--color-ink-soft);
+  font-size: 15px;
+  margin-top: 6px;
+  max-width: 46ch;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  padding: 24px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-standard), box-shadow 160ms var(--ease-standard);
+
+  &--primary {
+    background: var(--color-primary-deep);
+    color: var(--color-bg);
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--color-primary-deep);
+    border: 1px solid var(--color-line);
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+
+  &--green {
+    background: rgba(143, 174, 132, 0.22);
+    color: var(--color-primary-deep);
+  }
+
+  &--rose {
+    background: rgba(227, 169, 174, 0.28);
+    color: var(--color-accent-deep);
+  }
+
+  &--amber {
+    background: rgba(214, 168, 90, 0.22);
+    color: #8A6420;
+  }
+
+  &--neutral {
+    background: var(--color-surface-alt);
+    color: var(--color-ink-soft);
+  }
+}
+
+.btn {
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

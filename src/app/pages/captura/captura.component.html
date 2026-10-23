@@ -1,0 +1,53 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Captura inteligente de pedidos</p>
+      <h1 class="page-header__title">Cuéntanos qué necesitas</h1>
+      <p class="page-header__subtitle">
+        Escribe tu pedido con tus propias palabras. El sistema identifica sabor, tamaño, fecha y diseño por ti.
+      </p>
+    </div>
+  </header>
+
+  <div class="card captura">
+    <label class="captura__campo" for="cliente">Tu nombre</label>
+    <input id="cliente" class="captura__nombre" type="text" placeholder="Ej: Laura Duarte" [(ngModel)]="cliente" />
+    <textarea class="captura__texto" rows="4" [(ngModel)]="texto"
+      placeholder="Ej: Para el sábado quiero una torta de chocolate para 20 personas, temática unicornio…"></textarea>
+
+    <div class="captura__acciones">
+      <div class="captura__ejemplos">
+        <span>Prueba con un ejemplo:</span>
+        <button type="button" class="captura__chip" *ngFor="let e of ejemplos" (click)="usarEjemplo(e)">
+          {{ e }}
+        </button>
+      </div>
+      <button class="btn btn--primary" type="button" [disabled]="!texto.trim()" (click)="interpretar()">
+        Interpretar pedido
+      </button>
+    </div>
+  </div>
+
+  <div class="card resultado" *ngIf="interpretado">
+    <h2>Esto fue lo que entendimos</h2>
+    <p class="resultado__hint">Revisa los datos antes de continuar. Lo que tenga baja confianza conviene confirmarlo.
+    </p>
+
+    <div class="resultado__grid">
+      <div class="campo" *ngFor="let campo of campos">
+        <span class="campo__etiqueta">{{ campo.etiqueta }}</span>
+        <span class="campo__valor">{{ campo.valor }}</span>
+        <span class="badge" [ngClass]="'badge--' + variante(campo.confianza)">
+          {{ campo.confianza * 100 | number: '1.0-0' }}% confianza
+        </span>
+      </div>
+    </div>
+
+    <button class="btn btn--primary" type="button" [disabled]="!cliente.trim()" (click)="continuar()">
+      Verificar capacidad en la Agenda
+    </button>
+    <p class="resultado__hint resultado__hint--aviso" *ngIf="!cliente.trim()">
+      Escribe tu nombre arriba para poder continuar.
+    </p>
+  </div>
+</section>

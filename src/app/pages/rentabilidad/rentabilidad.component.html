@@ -1,0 +1,136 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Costos e insumos</p>
+      <h1 class="page-header__title">Rentabilidad</h1>
+      <p class="page-header__subtitle">
+        Cuánto ganas de verdad y qué pedidos ya cotizados se quedan cortos cuando sube un insumo.
+      </p>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <article class="card kpi-card">
+      <p class="kpi-card__label">Insumos con alza</p>
+      <p class="kpi-card__valor">{{ insumosConAlza }} de {{ insumos.length }}</p>
+      <p class="kpi-card__detalle">Frente al precio de cotización</p>
+    </article>
+    <article class="card kpi-card">
+      <p class="kpi-card__label">Pedidos afectados</p>
+      <p class="kpi-card__valor">{{ afectados.length }} de {{ pedidos.length }}</p>
+      <p class="kpi-card__detalle">Cotizados con costos anteriores</p>
+    </article>
+    <article class="card kpi-card">
+      <p class="kpi-card__label">Costo adicional</p>
+      <p class="kpi-card__valor">{{ pesos(costoExtra) }}</p>
+      <p class="kpi-card__detalle">Si se producen con precios de hoy</p>
+    </article>
+    <article class="card kpi-card">
+      <p class="kpi-card__label">Margen de lo cotizado</p>
+      <p class="kpi-card__valor">{{ margenHoy | number: '1.0-0' }}%</p>
+      <p class="kpi-card__detalle">Era {{ margenCotizado | number: '1.0-0' }}% al cotizar</p>
+    </article>
+  </div>
+
+  <div class="fila">
+    <article class="card">
+      <h2>Precios de insumos</h2>
+      <p class="nota">Cambia el precio de hoy de un insumo y mira cómo reaccionan las alertas.</p>
+
+      <div class="insumo insumo--cabecera">
+        <span>Insumo</span>
+        <span>Al cotizar</span>
+        <span>Hoy</span>
+        <span>Cambio</span>
+      </div>
+      <div class="insumo" *ngFor="let i of insumos">
+        <span class="insumo__nombre">
+          {{ i.nombre }}
+          <span class="insumo__unidad">por {{ i.unidad }}</span>
+        </span>
+        <span>{{ pesos(i.precioCotizado) }}</span>
+        <input
+          class="insumo__input"
+          type="number"
+          min="0"
+          step="100"
+          [ngModel]="i.precioActual"
+          (ngModelChange)="cambiarPrecio(i, $event)"
+          [attr.aria-label]="'Precio de hoy de ' + i.nombre"
+        />
+        <span class="badge" [ngClass]="'badge--' + claseVariacion(i)">{{ etiquetaVariacion(i) }}</span>
+      </div>
+
+      <button class="btn btn--ghost" type="button" (click)="restablecer()">Restablecer precios de ejemplo</button>
+    </article>
+
+    <article class="card">
+      <h2>Margen real por mes</h2>
+      <p class="nota">
+        Margen = (ingresos − costos) ÷ ingresos. La barra rayada es lo que rendirían los pedidos ya cotizados con los
+        precios de hoy.
+      </p>
+      <div class="meses">
+        <div class="mes" *ngFor="let m of meses">
+          <span class="mes__valor">{{ m.margen }}%</span>
+          <div class="mes__caja">
+            <div class="mes__relleno" [style.height.%]="alto(m.margen)"></div>
+          </div>
+          <span class="mes__nombre">{{ m.mes }}</span>
+        </div>
+        <div class="mes mes--hoy" [class.mes--alerta]="afectados.length > 0">
+          <span class="mes__valor">{{ margenHoy | number: '1.0-0' }}%</span>
+          <div class="mes__caja">
+            <div class="mes__relleno" [style.height.%]="alto(margenHoy)"></div>
+          </div>
+          <span class="mes__nombre">Cotizados</span>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <article class="card">
+    <h2>Pedidos cotizados que se ven afectados</h2>
+
+    <ng-container *ngIf="afectados.length; else sinAlertas">
+      <div class="alerta">
+        <strong>{{ insumosConAlza === 1 ? 'Subió el precio de 1 insumo' : 'Subió el precio de ' + insumosConAlza + ' insumos' }}</strong>
+        y {{ afectados.length === 1 ? '1 pedido ya cotizado tiene' : afectados.length + ' pedidos ya cotizados tienen' }}
+        hoy menos margen del que se calculó al cotizar.
+      </div>
+
+      <div class="tabla__fila tabla__fila--cabecera">
+        <span>Pedido</span>
+        <span>Cotizado</span>
+        <span>Margen al cotizar</span>
+        <span>Margen hoy</span>
+        <span>Impacto</span>
+        <span>Precio sugerido</span>
+      </div>
+      <div class="tabla__fila" *ngFor="let e of afectados">
+        <span>
+          <strong>{{ e.cliente }}</strong>
+          <small>{{ e.producto }}</small>
+        </span>
+        <span>{{ pesos(e.precio) }}</span>
+        <span>{{ e.margenCotizado | number: '1.0-1' }}%</span>
+        <span class="tabla__hoy">{{ e.margenActual | number: '1.0-1' }}%</span>
+        <span>
+          <span class="badge" [ngClass]="'badge--' + e.variante">{{ e.nivel }} · −{{ e.caida | number: '1.0-1' }} pts</span>
+        </span>
+        <span class="tabla__sugerido">{{ pesos(e.precioSugerido) }}</span>
+      </div>
+
+      <p class="nota nota--pie">
+        Precio sugerido = costo de hoy ÷ (1 − margen con el que se cotizó), redondeado a la centena. Con ese precio
+        recuperas el margen original.
+      </p>
+    </ng-container>
+
+    <ng-template #sinAlertas>
+      <div class="alerta alerta--ok">
+        Sin alertas. Con los precios de hoy, ningún pedido cotizado pierde margen.
+      </div>
+    </ng-template>
+  </article>
+</section>

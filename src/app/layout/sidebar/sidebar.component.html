@@ -1,0 +1,63 @@
+<nav class="sidebar" aria-label="Navegación principal">
+  <div class="sidebar__brand" aria-hidden="true">
+    <span class="sidebar__brand-mark">R</span>
+  </div>
+
+  <ul class="sidebar__list">
+    <li *ngFor="let item of navItems" class="sidebar__item">
+      <a [routerLink]="item.path" routerLinkActive="is-active" class="sidebar__link" [attr.aria-label]="item.label">
+        <span class="sidebar__icon" [ngSwitch]="item.icon">
+          <svg *ngSwitchCase="'sparkle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+            <path d="M12 8c0 2.2-1.8 4-4 4 2.2 0 4 1.8 4 4 0-2.2 1.8-4 4-4-2.2 0-4-1.8-4-4Z" />
+          </svg>
+
+          <svg *ngSwitchCase="'grid'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="7" height="7" rx="1.5" />
+            <rect x="13" y="4" width="7" height="7" rx="1.5" />
+            <rect x="4" y="13" width="7" height="7" rx="1.5" />
+            <rect x="13" y="13" width="7" height="7" rx="1.5" />
+          </svg>
+          <!-- Panel: casa -->
+          <svg *ngSwitchCase="'home'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 11.5 12 4l8 7.5" />
+            <path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" />
+            <path d="M10 20v-5h4v5" />
+          </svg>
+          <!-- Pedidos: pastel -->
+          <svg *ngSwitchCase="'cake'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20h16" />
+            <path d="M5 20v-6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6" />
+            <path d="M9 12V9M12 12V9M15 12V9" />
+            <path d="M12 9c-.9 0-1.4-.8-1-1.6.3-.6 1-1.6 1-1.6s.7 1 1 1.6c.4.8-.1 1.6-1 1.6Z" />
+          </svg>
+          <!-- Agenda: calendario -->
+          <svg *ngSwitchCase="'calendar'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="5.5" width="16" height="14.5" rx="2" />
+            <path d="M4 10h16" />
+            <path d="M8 3.5v3M16 3.5v3" />
+            <path d="M8.5 14h1M12 14h1M15.5 14h1M8.5 17h1M12 17h1" />
+          </svg>
+          <!-- Rentabilidad: gráfico -->
+          <svg *ngSwitchCase="'chart'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20V10M11 20V4M18 20v-7" />
+            <path d="M3 20h18" />
+          </svg>
+          <!-- Clientes: persona -->
+          <svg *ngSwitchCase="'user'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.5" />
+            <path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" />
+          </svg>
+        </span>
+        <span class="sidebar__tooltip">{{ item.label }}</span>
+      </a>
+    </li>
+  </ul>
+</nav>

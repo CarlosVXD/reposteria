@@ -1,0 +1,258 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  padding: 20px 22px;
+}
+
+.kpi-card__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}
+
+.kpi-card__valor {
+  font-family: var(--font-display);
+  font-size: 28px;
+  margin: 8px 0 4px;
+  color: var(--color-primary-deep);
+}
+
+.kpi-card__detalle {
+  font-size: 12.5px;
+  color: var(--color-ink-soft);
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.nota {
+  font-size: 13px;
+  color: var(--color-ink-soft);
+  margin-bottom: 18px;
+
+  &--pie {
+    margin: 16px 0 0;
+  }
+}
+
+/* ---------- Precios de insumos ---------- */
+.insumo {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr 1fr 0.9fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-line);
+  font-size: 14px;
+
+  &--cabecera {
+    border-top: none;
+    padding-top: 0;
+
+    span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-ink-soft);
+    }
+  }
+
+  .badge {
+    justify-self: start;
+  }
+}
+
+.insumo__nombre {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+}
+
+.insumo__unidad {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ink-soft);
+}
+
+.insumo__input {
+  width: 100%;
+  max-width: 110px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-line);
+  background: var(--color-bg);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--color-ink);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+}
+
+.btn {
+  margin-top: 16px;
+}
+
+/* ---------- Margen por mes ---------- */
+.meses {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.mes {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mes__caja {
+  width: 100%;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--color-surface-alt);
+}
+
+.mes__relleno {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  background: var(--color-primary);
+  transition: height 400ms var(--ease-standard);
+}
+
+.mes__valor {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary-deep);
+}
+
+.mes__nombre {
+  font-size: 12px;
+  color: var(--color-ink-soft);
+}
+
+.mes--hoy .mes__relleno {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-primary),
+    var(--color-primary) 6px,
+    rgba(143, 174, 132, 0.4) 6px,
+    rgba(143, 174, 132, 0.4) 12px
+  );
+}
+
+.mes--alerta {
+  .mes__valor {
+    color: var(--color-accent-deep);
+  }
+
+  .mes__relleno {
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-accent-deep),
+      var(--color-accent-deep) 6px,
+      rgba(181, 113, 122, 0.45) 6px,
+      rgba(181, 113, 122, 0.45) 12px
+    );
+  }
+}
+
+/* ---------- Alertas y tabla ---------- */
+.alerta {
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  border-radius: var(--radius-sm);
+  background: rgba(214, 168, 90, 0.14);
+  border: 1px solid rgba(214, 168, 90, 0.35);
+  color: #6b4e15;
+  font-size: 13.5px;
+
+  &--ok {
+    margin: 12px 0 0;
+    background: rgba(143, 174, 132, 0.2);
+    border-color: rgba(143, 174, 132, 0.5);
+    color: var(--color-primary-deep);
+    font-weight: 600;
+  }
+}
+
+.tabla__fila {
+  display: grid;
+  grid-template-columns: 1.6fr 0.9fr 0.9fr 0.8fr 1.3fr 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--color-line);
+  font-size: 13.5px;
+
+  strong {
+    display: block;
+    font-size: 14px;
+  }
+
+  small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--color-ink-soft);
+  }
+
+  &--cabecera {
+    border-top: none;
+    padding-top: 0;
+
+    span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-ink-soft);
+    }
+  }
+}
+
+.tabla__hoy {
+  font-weight: 700;
+  color: var(--color-accent-deep);
+}
+
+.tabla__sugerido {
+  font-weight: 700;
+  color: var(--color-primary-deep);
+}
+
+@media (max-width: 980px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fila {
+    grid-template-columns: 1fr;
+  }
+
+  .tabla__fila {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tabla__fila--cabecera {
+    display: none;
+  }
+}
