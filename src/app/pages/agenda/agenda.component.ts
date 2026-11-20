@@ -1,39 +1,30 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { Complejidad, PedidoBorrador, PedidoBorradorService } from '../../services/pedido-borrador.service';
-import { DatosService } from '../../services/datos.service';
+import { ApiError, ApiService } from '../../api/api.service';
 import {
-  CAPACIDAD_DIARIA,
   COMPLEJIDADES,
-  CONSUMO_POR_COMPLEJIDAD,
+  Complejidad,
   Dia,
-  MARGEN_OBJETIVO,
+  Faltante,
   NOMBRES_RECURSO,
   Pedido,
   RECURSOS,
   Recurso,
+  Uso,
   pesos,
-} from '../../data/datos';
-
-interface Faltante {
-  nombre: string;
-  necesita: number;
-  quedan: number;
-}
-
-interface Verificacion {
-  cabe: boolean;
-  faltantes: Faltante[];
-}
+} from '../../api/modelos';
+import { PedidoBorrador, PedidoBorradorService } from '../../services/pedido-borrador.service';
 
 interface Resultado {
   fecha: Date;
-  verificacion: Verificacion;
+  verificacion: { cabe: boolean; faltantes: Faltante[] };
   sugerencia: Dia | null;
 }
+
+const SIN_USO: Uso = { horno: 0, decoracion: 0, personal: 0 };
 
 @Component({
   selector: 'app-agenda',
@@ -43,28 +34,27 @@ interface Resultado {
   styleUrl: './agenda.component.scss',
 })
 export class AgendaComponent implements OnInit {
-  // El orden importa: estas dos primero, porque los campos de abajo las usan
-  private readonly datos = inject(DatosService);
+  private readonly api = inject(ApiService);
   private readonly servicio = inject(PedidoBorradorService);
 
-  // Capacidad y consumo vienen de los datos compartidos
   readonly recursos = RECURSOS;
   readonly nombres = NOMBRES_RECURSO;
-  readonly capacidad = CAPACIDAD_DIARIA;
-  readonly consumo = CONSUMO_POR_COMPLEJIDAD;
   readonly complejidades = COMPLEJIDADES;
   readonly pesos = pesos;
-  readonly margenObjetivo = Math.round(MARGEN_OBJETIVO * 100);
 
-  // Ya no es readonly: al confirmar un pedido se vuelve a calcular con el pedido nuevo adentro
-  dias: Dia[] = this.datos.diasConUso(14);
+  // Las reglas (horas por día y horas por complejidad) llegan del servidor
+  capacidad: Uso = SIN_USO;
+  consumo: Record<Complejidad, Uso> = { Baja: SIN_USO, Media: SIN_USO, Alta: SIN_USO };
+  margenObjetivo = 40;
 
-  // Arranca en el primer día lleno que haya, para que la demo muestre el conflicto
-  indiceSeleccionado = Math.max(0, this.dias.findIndex((d) => this.estado(d) === 'lleno'));
+  cargando = true;
+  dias: Dia[] = [];
+  indiceSeleccionado = 0;
   complejidad: Complejidad = 'Alta';
   resultado: Resultado | null = null;
   pedido: PedidoBorrador | null = null;
   avisoFecha = '';
+  enviando = false;
 
   // Lo que sale de interpretar el pedido de Captura
   receta = 'clasica';
@@ -72,11 +62,32 @@ export class AgendaComponent implements OnInit {
   precioSugerido = 0;
   confirmado: Pedido | null = null;
 
+  /** Mientras llegan los datos, el día "actual" es uno vacío para que la pantalla no falle. */
+  private readonly diaVacio: Dia = { fecha: new Date(), usado: SIN_USO, ocupacion: 0, estado: 'libre' };
+
   get diaActual(): Dia {
-    return this.dias[this.indiceSeleccionado];
+    return this.dias[this.indiceSeleccionado] ?? this.diaVacio;
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    try {
+      const [dias, reglas] = await Promise.all([this.api.dias(), this.api.reglas()]);
+      this.dias = dias;
+      this.capacidad = reglas.capacidad;
+      this.consumo = reglas.consumo;
+      // Arranca en el primer día lleno que haya, para que la demo muestre el conflicto
+      this.indiceSeleccionado = Math.max(0, dias.findIndex((d) => d.estado === 'lleno'));
+    } catch {
+      return; // sin conexión: la app ya muestra el aviso
+    } finally {
+      this.cargando = false;
+    }
+
+    await this.recibirPedidoDeCaptura();
+  }
+
+  /** Si venimos de Captura, calcula el precio y verifica la capacidad sin que nadie toque un botón. */
+  private async recibirPedidoDeCaptura() {
     const borrador = this.servicio.borrador;
     if (!borrador) return;
 
@@ -84,10 +95,16 @@ export class AgendaComponent implements OnInit {
     this.pedido = borrador;
     this.complejidad = borrador.complejidad;
 
-    // Con lo que entendió la Captura: qué receta es, de qué tamaño y cuánto costaría
-    this.receta = this.datos.recetaPara(borrador.sabor, borrador.tamano, borrador.diseno);
-    this.escala = this.datos.escalaPara(this.receta, borrador.tamano);
-    this.precioSugerido = this.datos.cotizar(this.receta, this.escala).precio;
+    try {
+      const cotizacion = await this.api.cotizar(borrador.sabor, borrador.tamano, borrador.diseno, borrador.tipo);
+      this.receta = cotizacion.receta;
+      this.escala = cotizacion.escala;
+      this.precioSugerido = cotizacion.precio;
+      this.margenObjetivo = Math.round(cotizacion.margenObjetivo * 100);
+    } catch (e) {
+      this.avisoFecha = this.mensaje(e, 'No pudimos calcular el precio sugerido.');
+      return;
+    }
 
     const fecha = borrador.fecha;
     if (!fecha) {
@@ -95,14 +112,14 @@ export class AgendaComponent implements OnInit {
       return;
     }
 
-    const indice = this.dias.findIndex((d) => this.mismoDia(d.fecha, fecha));
+    const indice = this.indiceDe(fecha);
     if (indice === -1) {
       this.avisoFecha = 'La fecha pedida queda fuera de los próximos 14 días de la agenda.';
       return;
     }
 
     this.indiceSeleccionado = indice;
-    this.comprobar(); // verifica solo, sin que nadie toque un botón
+    await this.comprobar();
   }
 
   descartarPedido() {
@@ -113,23 +130,35 @@ export class AgendaComponent implements OnInit {
   }
 
   /** Crea el pedido de verdad: desde aquí aparece en Pedidos, ocupa la agenda y cuenta en el Panel. */
-  confirmar() {
-    if (!this.pedido) return;
-
-    this.confirmado = this.datos.crearPedido({
-      cliente: this.pedido.cliente,
-      producto: this.nombreProducto(this.pedido),
-      receta: this.receta,
-      escala: this.escala,
-      complejidad: this.complejidad,
-      fecha: this.diaActual.fecha,
-      precio: this.precioSugerido,
-    });
-
-    this.pedido = null;
-    this.resultado = null;
-    this.avisoFecha = '';
-    this.dias = this.datos.diasConUso(14); // el calendario ahora incluye el pedido nuevo
+  async confirmar() {
+    if (!this.pedido || this.enviando) return;
+    this.enviando = true;
+    try {
+      this.confirmado = await this.api.crearPedido({
+        cliente: this.pedido.cliente,
+        producto: this.nombreProducto(this.pedido),
+        receta: this.receta,
+        escala: this.escala,
+        complejidad: this.complejidad,
+        fecha: this.diaActual.fecha,
+        solicitudId: this.pedido.solicitudId,
+      });
+      this.pedido = null;
+      this.resultado = null;
+      this.avisoFecha = '';
+      this.dias = await this.api.dias(); // el calendario ahora incluye el pedido nuevo
+    } catch (e) {
+      if (e instanceof ApiError && e.estado === 409) {
+        // Mientras confirmabas, alguien más ocupó ese cupo: se refresca y se vuelve a verificar
+        this.avisoFecha = 'Ese día se acaba de llenar. Revisa la fecha sugerida.';
+        this.dias = await this.api.dias();
+        await this.comprobar();
+      } else {
+        this.avisoFecha = this.mensaje(e, 'No se pudo confirmar el pedido.');
+      }
+    } finally {
+      this.enviando = false;
+    }
   }
 
   // ---------- Acciones de la pantalla ----------
@@ -143,63 +172,40 @@ export class AgendaComponent implements OnInit {
     this.resultado = null;
   }
 
-  comprobar() {
-    const verificacion = this.verificar(this.diaActual, this.complejidad);
-    this.resultado = {
-      fecha: this.diaActual.fecha,
-      verificacion,
-      sugerencia: verificacion.cabe
-        ? null
-        : this.buscarSugerencia(this.indiceSeleccionado, this.complejidad),
-    };
-  }
-
-  usarSugerencia(dia: Dia) {
-    this.indiceSeleccionado = this.dias.indexOf(dia);
-    this.comprobar();
-  }
-
-  // ---------- El corazón: verificar y sugerir ----------
-  private verificar(dia: Dia, complejidad: Complejidad): Verificacion {
-    const faltantes: Faltante[] = [];
-    for (const r of this.recursos) {
-      const necesita = this.consumo[complejidad][r];
-      const quedan = this.capacidad[r] - dia.usado[r];
-      if (necesita > quedan) {
-        faltantes.push({ nombre: this.nombres[r], necesita, quedan });
-      }
+  /** Le pregunta al servidor si cabe el pedido ese día y, si no, qué recurso falla y qué fecha sugiere. */
+  async comprobar() {
+    try {
+      const v = await this.api.verificar(this.diaActual.fecha, this.complejidad);
+      this.resultado = {
+        fecha: v.fecha,
+        verificacion: { cabe: v.cabe, faltantes: v.faltantes },
+        sugerencia: v.sugerencia,
+      };
+    } catch (e) {
+      this.resultado = null;
+      this.avisoFecha = this.mensaje(e, 'No se pudo verificar la capacidad.');
     }
-    return { cabe: faltantes.length === 0, faltantes };
   }
 
-  private buscarSugerencia(desde: number, complejidad: Complejidad): Dia | null {
-    for (let paso = 1; paso < this.dias.length; paso++) {
-      const candidatos = [desde + paso, desde - paso]; // primero el posterior, luego el anterior
-      for (const i of candidatos) {
-        const existe = i >= 0 && i < this.dias.length;
-        if (existe && this.verificar(this.dias[i], complejidad).cabe) {
-          return this.dias[i];
-        }
-      }
-    }
-    return null;
+  async usarSugerencia(dia: Dia) {
+    const indice = this.indiceDe(dia.fecha);
+    if (indice === -1) return;
+    this.indiceSeleccionado = indice;
+    await this.comprobar();
   }
 
   // ---------- Ayudas para pintar ----------
   ocupacion(dia: Dia): number {
-    const ratios = this.recursos.map((r) => dia.usado[r] / this.capacidad[r]);
-    return Math.round(Math.max(...ratios) * 100);
+    return dia.ocupacion;
   }
 
   estado(dia: Dia): 'libre' | 'medio' | 'lleno' {
-    const o = this.ocupacion(dia);
-    if (o >= 90) return 'lleno';
-    if (o >= 70) return 'medio';
-    return 'libre';
+    return dia.estado;
   }
 
   porcentaje(r: Recurso): number {
-    return Math.round((this.diaActual.usado[r] / this.capacidad[r]) * 100);
+    const total = this.capacidad[r];
+    return total ? Math.round((this.diaActual.usado[r] / total) * 100) : 0;
   }
 
   alcanza(r: Recurso): boolean {
@@ -222,8 +228,12 @@ export class AgendaComponent implements OnInit {
     return partes.length ? partes.join(' · ') : 'Pedido personalizado';
   }
 
-  private mismoDia(a: Date, b: Date): boolean {
-    return a.toDateString() === b.toDateString();
+  private indiceDe(fecha: Date): number {
+    return this.dias.findIndex((d) => d.fecha.toDateString() === fecha.toDateString());
+  }
+
+  private mensaje(e: unknown, porDefecto: string): string {
+    return e instanceof ApiError && e.estado !== 0 ? e.message : porDefecto;
   }
 
   private capitalizar(texto: string): string {

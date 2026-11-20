@@ -7,6 +7,20 @@
         Cómo va el negocio, dónde se está apretando la producción y qué viene el próximo mes.
       </p>
     </div>
+
+    <div class="resumen-voz__caja" *ngIf="vozDisponible && kpis.length">
+      <button type="button" class="btn btn--primary resumen-voz" [class.resumen-voz--activo]="hablando"
+        [attr.aria-pressed]="hablando" (click)="escucharResumen()">
+        <svg *ngIf="!hablando" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9v6h4l5 4V5L8 9H4Z" />
+          <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" />
+        </svg>
+        <span class="resumen-voz__ondas" *ngIf="hablando" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>{{ hablando ? 'Detener' : 'Escuchar resumen del día' }}</span>
+      </button>
+      <p class="resumen-voz__aviso" *ngIf="avisoVoz" role="status">{{ avisoVoz }}</p>
+    </div>
   </header>
 
   <div class="kpi-grid">

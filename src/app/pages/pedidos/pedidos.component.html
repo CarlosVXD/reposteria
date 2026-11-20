@@ -68,6 +68,7 @@
       </span>
     </div>
 
-    <p class="vacio" *ngIf="!visibles.length">Ningún pedido coincide con la búsqueda.</p>
+    <p class="vacio" *ngIf="cargando">Cargando pedidos…</p>
+    <p class="vacio" *ngIf="!cargando && !visibles.length">Ningún pedido coincide con la búsqueda.</p>
   </div>
 </section>

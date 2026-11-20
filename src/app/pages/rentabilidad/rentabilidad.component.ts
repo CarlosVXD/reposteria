@@ -1,9 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { DatosService } from '../../services/datos.service';
-import { Insumo, Pedido, PedidoEvaluado, pesos } from '../../data/datos';
+import { ApiService } from '../../api/api.service';
+import { Insumo, MargenMes, PedidoEvaluado, pesos } from '../../api/modelos';
 
 @Component({
   selector: 'app-rentabilidad',
@@ -12,53 +12,72 @@ import { Insumo, Pedido, PedidoEvaluado, pesos } from '../../data/datos';
   templateUrl: './rentabilidad.component.html',
   styleUrl: './rentabilidad.component.scss',
 })
-export class RentabilidadComponent {
-  private readonly datos = inject(DatosService);
+export class RentabilidadComponent implements OnInit, OnDestroy {
+  private readonly api = inject(ApiService);
 
   readonly escalaMax = 60; // el 60% de margen llena la barra
   readonly pesos = pesos;
 
-  // Resultados que calcula recalcular()
-  meses: { mes: string; margen: number }[] = [];
-  pedidos: Pedido[] = []; // los pedidos abiertos (aún sin entregar)
-  evaluados: PedidoEvaluado[] = [];
+  insumos: Insumo[] = [];
+  meses: MargenMes[] = [];
   afectados: PedidoEvaluado[] = [];
+  abiertos = 0; // pedidos todavía sin entregar
   insumosConAlza = 0;
   costoExtra = 0;
   margenCotizado = 0;
   margenHoy = 0;
 
-  constructor() {
-    this.recalcular();
+  // Al escribir un precio no se llama al servidor en cada tecla: se espera a que la persona pare
+  private readonly esperas = new Map<number, ReturnType<typeof setTimeout>>();
+
+  async ngOnInit() {
+    try {
+      const [insumos] = await Promise.all([this.api.insumos(), this.refrescar()]);
+      this.insumos = insumos;
+    } catch {
+      // sin conexión: la app ya muestra el aviso
+    }
   }
 
-  // Los insumos viven en el servicio: si cambias un precio aquí, el Panel también lo ve
-  get insumos(): Insumo[] {
-    return this.datos.insumos;
+  ngOnDestroy() {
+    this.esperas.forEach((espera) => clearTimeout(espera));
   }
 
   // ---------- Acciones de la pantalla ----------
   cambiarPrecio(insumo: Insumo, valor: number | null) {
     insumo.precioActual = valor;
-    this.recalcular();
+    clearTimeout(this.esperas.get(insumo.id));
+    this.esperas.set(insumo.id, setTimeout(() => this.guardar(insumo), 400));
   }
 
-  restablecer() {
-    this.datos.restablecerInsumos();
-    this.recalcular();
+  async restablecer() {
+    try {
+      this.insumos = await this.api.restablecerInsumos();
+      await this.refrescar();
+    } catch {
+      // sin conexión
+    }
   }
 
-  // ---------- Pedimos las cuentas al servicio ----------
-  private recalcular() {
-    const r = this.datos.resumenRentabilidad();
-    this.pedidos = r.abiertos;
-    this.evaluados = r.evaluados;
+  /** Guarda el precio en el servidor y vuelve a pedir las alertas, que dependen de él. */
+  private async guardar(insumo: Insumo) {
+    try {
+      await this.api.cambiarPrecio(insumo.id, insumo.precioActual);
+      await this.refrescar();
+    } catch {
+      // si falló, el valor en pantalla queda distinto al del servidor hasta la próxima carga
+    }
+  }
+
+  private async refrescar() {
+    const r = await this.api.rentabilidad();
+    this.meses = r.meses;
     this.afectados = r.afectados;
+    this.abiertos = r.abiertos;
     this.insumosConAlza = r.insumosConAlza;
     this.costoExtra = r.costoExtra;
     this.margenCotizado = r.margenCotizado;
     this.margenHoy = r.margenHoy;
-    this.meses = this.datos.margenPorMes(); // la barra del mes actual también depende de los precios
   }
 
   // ---------- Ayudas para pintar ----------

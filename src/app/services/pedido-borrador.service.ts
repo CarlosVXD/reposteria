@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 
-export type Complejidad = 'Baja' | 'Media' | 'Alta';
+import { Complejidad } from '../api/modelos';
 
 export interface PedidoBorrador {
-  cliente: string; 
+  cliente: string;
   texto: string;
   sabor: string;
   tamano: string;
@@ -11,6 +11,8 @@ export interface PedidoBorrador {
   fecha: Date | null; // null si no se pudo detectar la fecha
   fechaTexto: string;
   complejidad: Complejidad;
+  solicitudId: number | null; // la interpretación registrada en el servidor
+  tipo: string | null; // torta | cupcakes | postres | boda, según el NLP
 }
 
 @Injectable({ providedIn: 'root' })

@@ -4,46 +4,118 @@
       <p class="page-header__eyebrow">Captura inteligente de pedidos</p>
       <h1 class="page-header__title">Cuéntanos qué necesitas</h1>
       <p class="page-header__subtitle">
-        Escribe tu pedido con tus propias palabras. El sistema identifica sabor, tamaño, fecha y diseño por ti.
+        Escribe tu pedido con tus propias palabras. El sistema identifica sabor, tamaño, fecha y
+        diseño por ti.
       </p>
     </div>
   </header>
 
   <div class="card captura">
     <label class="captura__campo" for="cliente">Tu nombre</label>
-    <input id="cliente" class="captura__nombre" type="text" placeholder="Ej: Laura Duarte" [(ngModel)]="cliente" />
-    <textarea class="captura__texto" rows="4" [(ngModel)]="texto"
-      placeholder="Ej: Para el sábado quiero una torta de chocolate para 20 personas, temática unicornio…"></textarea>
+    <input
+      id="cliente"
+      class="captura__nombre"
+      type="text"
+      placeholder="Ej: Laura Duarte"
+      [(ngModel)]="cliente"
+    />
+    <textarea
+      class="captura__texto"
+      rows="4"
+      [(ngModel)]="texto"
+      placeholder="Ej: Para el sábado quiero una torta de chocolate para 20 personas, temática unicornio…"
+    ></textarea>
+
+    <div class="captura__voz" *ngIf="vozDisponible">
+      <button
+        type="button"
+        class="captura__mic"
+        [class.captura__mic--activo]="escuchando"
+        [attr.aria-pressed]="escuchando"
+        (click)="alternarVoz()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="9" y="3" width="6" height="11" rx="3" />
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+        </svg>
+        <span>{{ escuchando ? 'Escuchando… toca para terminar' : 'Dictar pedido' }}</span>
+      </button>
+      <p class="captura__aviso-voz" *ngIf="avisoVoz" role="status">{{ avisoVoz }}</p>
+    </div>
 
     <div class="captura__acciones">
       <div class="captura__ejemplos">
         <span>Prueba con un ejemplo:</span>
-        <button type="button" class="captura__chip" *ngFor="let e of ejemplos" (click)="usarEjemplo(e)">
+        <button
+          type="button"
+          class="captura__chip"
+          *ngFor="let e of ejemplos"
+          (click)="usarEjemplo(e)"
+        >
           {{ e }}
         </button>
       </div>
-      <button class="btn btn--primary" type="button" [disabled]="!texto.trim()" (click)="interpretar()">
-        Interpretar pedido
+      <button
+        class="btn btn--primary"
+        type="button"
+        [disabled]="!texto.trim() || interpretando"
+        (click)="interpretar()"
+      >
+        {{ interpretando ? 'Interpretando…' : 'Interpretar pedido' }}
       </button>
     </div>
   </div>
 
   <div class="card resultado" *ngIf="interpretado">
     <h2>Esto fue lo que entendimos</h2>
-    <p class="resultado__hint">Revisa los datos antes de continuar. Lo que tenga baja confianza conviene confirmarlo.
+    <p class="resultado__hint">
+      Revisa los datos antes de continuar. Lo que tenga baja confianza conviene confirmarlo.
     </p>
 
     <div class="resultado__grid">
       <div class="campo" *ngFor="let campo of campos">
         <span class="campo__etiqueta">{{ campo.etiqueta }}</span>
         <span class="campo__valor">{{ campo.valor }}</span>
+        <span class="campo__evidencia" *ngIf="campo.evidencia"
+          >Entendido de: «{{ campo.evidencia }}»</span
+        >
         <span class="badge" [ngClass]="'badge--' + variante(campo.confianza)">
           {{ campo.confianza * 100 | number: '1.0-0' }}% confianza
         </span>
       </div>
     </div>
 
-    <button class="btn btn--primary" type="button" [disabled]="!cliente.trim()" (click)="continuar()">
+    <div class="resultado__preguntas" *ngIf="preguntas.length">
+      <p>Para terminar, ayúdame con esto:</p>
+      <ul>
+        <li *ngFor="let p of preguntas">{{ p }}</li>
+      </ul>
+    </div>
+    <p class="resultado__aviso" *ngFor="let a of avisos">{{ a }}</p>
+    <p class="resultado__motor">
+      {{
+        motor === 'nlp'
+          ? 'Interpretado con NLP (spaCy).'
+          : 'Interpretación básica: el servicio de NLP no está disponible.'
+      }}
+    </p>
+
+    <button
+      class="btn btn--primary"
+      type="button"
+      [disabled]="!cliente.trim()"
+      (click)="continuar()"
+    >
       Verificar capacidad en la Agenda
     </button>
     <p class="resultado__hint resultado__hint--aviso" *ngIf="!cliente.trim()">

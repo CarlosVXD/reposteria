@@ -1,10 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { DatosService } from '../../services/datos.service';
-import { ESTADOS, EstadoPedido, Pedido, pesos } from '../../data/datos';
+import { ApiService } from '../../api/api.service';
+import { ESTADOS, EstadoPedido, Pedido, pesos } from '../../api/modelos';
 
 @Component({
   selector: 'app-pedidos',
@@ -13,33 +13,50 @@ import { ESTADOS, EstadoPedido, Pedido, pesos } from '../../data/datos';
   templateUrl: './pedidos.component.html',
   styleUrl: './pedidos.component.scss',
 })
-export class PedidosComponent {
-  private readonly datos = inject(DatosService);
+export class PedidosComponent implements OnInit {
+  private readonly api = inject(ApiService);
 
   readonly estados = ESTADOS;
   readonly pesos = pesos;
 
+  cargando = true;
+  todos: Pedido[] = []; // lo que mandó el servidor
+  visibles: Pedido[] = []; // lo que se ve después de buscar y filtrar
   busqueda = '';
   filtroEstado: EstadoPedido | 'Todos' = 'Todos';
-  visibles: Pedido[] = [];
   enCurso = 0;
 
-  constructor() {
-    this.actualizar();
+  async ngOnInit() {
+    try {
+      this.todos = await this.api.pedidos();
+    } catch {
+      // si el servidor no responde, el aviso de "sin conexión" ya lo muestra la app
+    } finally {
+      this.cargando = false;
+      this.actualizar();
+    }
   }
 
   // ---------- Acciones de la pantalla ----------
   actualizar() {
     const texto = this.normalizar(this.busqueda);
-    this.visibles = this.datos.pedidos
+    this.visibles = this.todos
       .filter((p) => this.filtroEstado === 'Todos' || p.estado === this.filtroEstado)
       .filter((p) => !texto || this.normalizar(`${p.cliente} ${p.producto}`).includes(texto))
       .sort((a, b) => this.grupo(a) - this.grupo(b) || a.fecha.getTime() - b.fecha.getTime());
-    this.enCurso = this.datos.pedidos.filter((p) => this.datos.estaAbierto(p)).length;
+    this.enCurso = this.todos.filter((p) => this.grupo(p) === 0).length;
   }
 
-  cambiarEstado(pedido: Pedido, estado: EstadoPedido) {
-    this.datos.cambiarEstado(pedido, estado);
+  async cambiarEstado(pedido: Pedido, estado: EstadoPedido) {
+    const anterior = pedido.estado;
+    pedido.estado = estado; // se ve al instante...
+    this.actualizar();
+    try {
+      const guardado = await this.api.cambiarEstado(pedido.id, estado); // ...y se confirma con el servidor
+      pedido.estado = guardado.estado;
+    } catch {
+      pedido.estado = anterior; // si falló, vuelve a como estaba
+    }
     this.actualizar();
   }
 
@@ -70,7 +87,7 @@ export class PedidosComponent {
     return dias > 0 ? `En ${dias} días` : `Hace ${-dias} días`;
   }
 
-  // Abiertos primero, luego entregados, al final cancelados
+  // Abiertos (0) primero, luego entregados (1), al final cancelados (2)
   private grupo(p: Pedido): number {
     if (p.estado === 'Cancelado') return 2;
     if (p.estado === 'Entregado') return 1;

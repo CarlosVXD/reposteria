@@ -1,41 +1,87 @@
-// ==========================================================================
-// Repostería — Sistema de diseño global
-// Paleta: verde salvia pastel + crema cálido + acento rosa glaseado
-// ==========================================================================
-
 :root {
-  // --- Color ---
-  --color-bg: #FAF7F0;              // crema cálido, fondo principal
-  --color-surface: #FFFFFF;         // tarjetas / superficies
-  --color-surface-alt: #F1EDE2;     // superficie secundaria (hover, chips)
-  --color-sidebar: #66cc67;         // verde bosque oscuro, barra lateral
-  --color-sidebar-active: #71d772;  // verde activo dentro del sidebar
-  --color-primary: #8FAE84;         // verde salvia pastel, color de marca
-  --color-primary-deep: #566B4C;    // verde profundo, texto sobre pastel
-  --color-accent: #E3A9AE;          // rosa glaseado, acento cálido
-  --color-accent-deep: #B5717A;     // rosa profundo para texto/iconos
-  --color-ink: #2B2A24;             // texto principal, casi negro cálido
-  --color-ink-soft: #6B6A5F;        // texto secundario
-  --color-line: #E4DFD1;            // líneas divisorias sutiles
+  // Tipografía: una sola familia sans (ya cargas Manrope; Fraunces ya no hace falta).
+  // Si un negocio quiere serif en títulos, cambia solo --font-display.
+  --font-ui: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-ui);
 
-  // --- Tipografía ---
-  --font-display: 'Fraunces', serif;
-  --font-ui: 'Manrope', sans-serif;
+  // Radios y sombras
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
 
-  // --- Radios y sombras ---
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --shadow-soft: 0 1px 2px rgba(43, 42, 36, 0.04), 0 8px 24px rgba(43, 42, 36, 0.06);
-
-  // --- Movimiento ---
+  // Movimiento
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Colores de ESTADO: significan lo mismo en cualquier tema y negocio
+  --color-success: #17714a;
+  --color-success-soft: #e3f4eb;
+  --color-warning: #8a5a0b;
+  --color-warning-soft: #fdf1d6;
+  --color-danger: #c42b1c;
+  --color-danger-soft: #fdebe8;
+  --color-info: #1d4ed8;
+  --color-info-soft: #e8effe;
+
+  // Compatibilidad con componentes existentes (antes "rosa glaseado")
+  --color-accent: var(--color-danger-soft);
+  --color-accent-deep: var(--color-danger);
 }
 
+// --- Tema: Azul royal (por defecto) ---------------------------------------
+:root,
+:root[data-theme='royal'] {
+  --color-primary: #2b4fc7;
+  --color-primary-deep: #223fa0;
+  --color-primary-soft: #eef2ff;
+  --color-on-primary: #ffffff;
+
+  --color-bg: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-surface-alt: #e9edf6;
+  --color-line: #dfe5f0;
+  --color-ink: #111a3a;
+  --color-ink-soft: #5b6585;
+
+  --color-sidebar: #0f1b4d;
+  --color-sidebar-active: rgba(255, 255, 255, 0.14);
+  --color-sidebar-ink: #aab4e0;
+  --color-sidebar-ink-active: #ffffff;
+}
+
+// --- Tema: Borgoña --------------------------------------------------------
+:root[data-theme='burgundy'] {
+  --color-primary: #7a1f36;
+  --color-primary-deep: #5e1729;
+  --color-primary-soft: #fbf1f3;
+  --color-on-primary: #ffffff;
+
+  --color-bg: #faf6f6;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f1e8ea;
+  --color-line: #e9dde0;
+  --color-ink: #2a1218;
+  --color-ink-soft: #7a5d65;
+
+  --color-sidebar: #33101b;
+  --color-sidebar-active: rgba(255, 255, 255, 0.14);
+  --color-sidebar-ink: #d9b4be;
+  --color-sidebar-ink-active: #ffffff;
+
+  // El peligro se separa de la marca con un rojo-naranja
+  --color-danger: #c2410c;
+  --color-danger-soft: #fff0e6;
+}
+
+// ==========================================================================
+// Base
+// ==========================================================================
 * {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
 }
@@ -47,11 +93,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-display);
   color: var(--color-ink);
   margin: 0;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 p {
@@ -65,22 +115,23 @@ a {
 
 // Respeta preferencia de movimiento reducido
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-// Foco visible para accesibilidad de teclado
+// Foco visible para teclado (ahora con el color de marca)
 :focus-visible {
-  outline: 2px solid var(--color-accent-deep);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 // ==========================================================================
 // Utilidades compartidas entre páginas
 // ==========================================================================
-
 .page {
   max-width: 1080px;
   margin: 0 auto;
@@ -92,107 +143,139 @@ a {
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
 }
 
 .page-header__eyebrow {
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--color-primary-deep);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary);
   margin: 0 0 6px;
 }
 
 .page-header__title {
-  font-size: 32px;
+  font-size: 28px;
 }
 
 .page-header__subtitle {
   color: var(--color-ink-soft);
   font-size: 15px;
   margin-top: 6px;
-  max-width: 46ch;
+  max-width: 52ch;
 }
 
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
   padding: 24px;
 }
 
+// --- Botones --------------------------------------------------------------
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-family: var(--font-ui);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 14px;
-  padding: 11px 20px;
-  border-radius: 999px;
-  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: transform 160ms var(--ease-standard), box-shadow 160ms var(--ease-standard);
+  text-decoration: none;
+  transition:
+    background-color 160ms var(--ease-standard),
+    border-color 160ms var(--ease-standard),
+    box-shadow 160ms var(--ease-standard);
 
   &--primary {
-    background: var(--color-primary-deep);
-    color: var(--color-bg);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+
+    &:hover {
+      background: var(--color-primary-deep);
+      box-shadow: var(--shadow-soft);
+    }
   }
 
   &--ghost {
-    background: transparent;
-    color: var(--color-primary-deep);
-    border: 1px solid var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border-color: var(--color-line);
+
+    &:hover {
+      background: var(--color-primary-soft);
+      border-color: var(--color-primary);
+    }
   }
 
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-soft);
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      box-shadow: none;
+    }
+  }
+
+  &--primary:disabled:hover {
+    background: var(--color-primary);
+  }
+
+  &--ghost:disabled:hover {
+    background: var(--color-surface);
+    border-color: var(--color-line);
   }
 }
 
+// --- Badges / chips de estado ---------------------------------------------
+// Los nombres --green / --rose / --amber se mantienen para no romper tus
+// componentes, pero ahora son SEMÁNTICOS:
+//   green = éxito (Entregado, alta confianza)     amber = atención (Pendiente, media)
+//   rose  = peligro (Cancelado, baja confianza)   blue  = en curso (En producción)
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
   font-family: var(--font-ui);
 
   &--green {
-    background: rgba(143, 174, 132, 0.22);
-    color: var(--color-primary-deep);
-  }
-
-  &--rose {
-    background: rgba(227, 169, 174, 0.28);
-    color: var(--color-accent-deep);
+    background: var(--color-success-soft);
+    color: var(--color-success);
   }
 
   &--amber {
-    background: rgba(214, 168, 90, 0.22);
-    color: #8A6420;
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+  }
+
+  &--rose {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  &--blue {
+    background: var(--color-info-soft);
+    color: var(--color-info);
+  }
+
+  &--primary {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-deep);
   }
 
   &--neutral {
     background: var(--color-surface-alt);
     color: var(--color-ink-soft);
-  }
-}
-
-.btn {
-  text-decoration: none;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-
-  &:hover {
-    transform: none;
-    box-shadow: none;
   }
 }

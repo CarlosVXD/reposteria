@@ -9,24 +9,27 @@
   flex-shrink: 0;
 }
 
+/* ---------- Marca ---------- */
 .sidebar__brand {
   margin-bottom: 32px;
 }
 
+// Marca en blanco sobre el fondo oscuro: legible en cualquier tema
 .sidebar__brand-mark {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-sidebar-ink-active);
   color: var(--color-sidebar);
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 800;
 }
 
+/* ---------- Navegación ---------- */
 .sidebar__list {
   list-style: none;
   margin: 0;
@@ -49,40 +52,47 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  border-radius: var(--radius-sm);
-  color: rgba(250, 247, 240, 0.55);
+  border-radius: var(--radius-md);
+  color: var(--color-sidebar-ink);
   text-decoration: none;
-  transition: background-color 180ms var(--ease-standard),
-              color 180ms var(--ease-standard),
-              transform 180ms var(--ease-standard);
+  transition:
+    background-color 180ms var(--ease-standard),
+    color 180ms var(--ease-standard);
 
   &:hover {
-    background: rgba(250, 247, 240, 0.08);
-    color: var(--color-bg);
-    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--color-sidebar-ink-active) 8%, transparent);
+    color: var(--color-sidebar-ink-active);
   }
 
-  &:hover .sidebar__tooltip {
+  &:hover .sidebar__tooltip,
+  &:focus-visible .sidebar__tooltip {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate(0, -50%);
     pointer-events: auto;
+  }
+
+  // el foco global (color de marca) no se ve sobre fondo oscuro
+  &:focus-visible {
+    outline: 2px solid var(--color-sidebar-ink-active);
+    outline-offset: 2px;
   }
 
   &.is-active {
     background: var(--color-sidebar-active);
-    color: var(--color-primary);
+    color: var(--color-sidebar-ink-active);
   }
 
+  // indicador lateral de la página activa
   &.is-active::before {
     content: '';
     position: absolute;
-    left: -12px;
+    left: -16px;
     top: 50%;
     transform: translateY(-50%);
-    width: 3px;
-    height: 20px;
-    border-radius: 2px;
-    background: var(--color-primary);
+    width: 4px;
+    height: 24px;
+    border-radius: 0 4px 4px 0;
+    background: var(--color-sidebar-ink-active);
   }
 }
 
@@ -97,21 +107,25 @@
   }
 }
 
+/* ---------- Tooltip ---------- */
 .sidebar__tooltip {
   position: absolute;
   left: calc(100% + 12px);
   top: 50%;
   transform: translate(-4px, -50%);
   background: var(--color-ink);
-  color: var(--color-bg);
+  color: var(--color-surface);
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 600;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 160ms var(--ease-standard), transform 160ms var(--ease-standard);
+  transition:
+    opacity 160ms var(--ease-standard),
+    transform 160ms var(--ease-standard);
   z-index: 20;
 }

@@ -1,3 +1,4 @@
+/* ---------- KPIs ---------- */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -10,16 +11,21 @@
 }
 
 .kpi-card__label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--color-ink-soft);
 }
 
 .kpi-card__valor {
   font-family: var(--font-display);
   font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   margin: 8px 0 4px;
-  color: var(--color-primary-deep);
+  color: var(--color-ink);
 }
 
 .kpi-card__detalle {
@@ -35,8 +41,9 @@
 }
 
 .card h2 {
-  font-size: 18px;
-  margin-bottom: 6px;
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .nota {
@@ -58,14 +65,17 @@
   padding: 10px 0;
   border-top: 1px solid var(--color-line);
   font-size: 14px;
+  color: var(--color-ink);
 
   &--cabecera {
     border-top: none;
     padding-top: 0;
 
     span {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       color: var(--color-ink-soft);
     }
   }
@@ -91,16 +101,21 @@
   width: 100%;
   max-width: 110px;
   padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-line);
-  background: var(--color-bg);
+  background: var(--color-surface);
   font-family: var(--font-ui);
   font-size: 14px;
   color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color 160ms var(--ease-standard),
+    box-shadow 160ms var(--ease-standard);
 
   &:focus {
     outline: none;
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
   }
 }
 
@@ -129,13 +144,13 @@
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--color-surface-alt);
 }
 
 .mes__relleno {
   width: 100%;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: var(--color-primary);
   transition: height 400ms var(--ease-standard);
 }
@@ -143,7 +158,8 @@
 .mes__valor {
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-primary-deep);
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .mes__nombre {
@@ -151,51 +167,56 @@
   color: var(--color-ink-soft);
 }
 
+/* Barra "Cotizados": rayada = proyección con precios de hoy */
 .mes--hoy .mes__relleno {
   background: repeating-linear-gradient(
     45deg,
     var(--color-primary),
     var(--color-primary) 6px,
-    rgba(143, 174, 132, 0.4) 6px,
-    rgba(143, 174, 132, 0.4) 12px
+    color-mix(in srgb, var(--color-primary) 35%, transparent) 6px,
+    color-mix(in srgb, var(--color-primary) 35%, transparent) 12px
   );
 }
 
+/* Si hay pedidos afectados, la proyección se tiñe de peligro */
 .mes--alerta {
   .mes__valor {
-    color: var(--color-accent-deep);
+    color: var(--color-danger);
   }
 
   .mes__relleno {
     background: repeating-linear-gradient(
       45deg,
-      var(--color-accent-deep),
-      var(--color-accent-deep) 6px,
-      rgba(181, 113, 122, 0.45) 6px,
-      rgba(181, 113, 122, 0.45) 12px
+      var(--color-danger),
+      var(--color-danger) 6px,
+      color-mix(in srgb, var(--color-danger) 35%, transparent) 6px,
+      color-mix(in srgb, var(--color-danger) 35%, transparent) 12px
     );
   }
 }
 
-/* ---------- Alertas y tabla ---------- */
+/* ---------- Alertas ---------- */
 .alerta {
   padding: 14px 16px;
   margin-bottom: 20px;
-  border-radius: var(--radius-sm);
-  background: rgba(214, 168, 90, 0.14);
-  border: 1px solid rgba(214, 168, 90, 0.35);
-  color: #6b4e15;
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent);
+  border-left: 4px solid var(--color-warning);
+  color: var(--color-warning);
   font-size: 13.5px;
 
   &--ok {
     margin: 12px 0 0;
-    background: rgba(143, 174, 132, 0.2);
-    border-color: rgba(143, 174, 132, 0.5);
-    color: var(--color-primary-deep);
+    background: var(--color-success-soft);
+    border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
+    border-left-color: var(--color-success);
+    color: var(--color-success);
     font-weight: 600;
   }
 }
 
+/* ---------- Tabla de pedidos afectados ---------- */
 .tabla__fila {
   display: grid;
   grid-template-columns: 1.6fr 0.9fr 0.9fr 0.8fr 1.3fr 1fr;
@@ -204,6 +225,8 @@
   padding: 14px 0;
   border-top: 1px solid var(--color-line);
   font-size: 13.5px;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
 
   strong {
     display: block;
@@ -222,8 +245,10 @@
     padding-top: 0;
 
     span {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       color: var(--color-ink-soft);
     }
   }
@@ -231,14 +256,15 @@
 
 .tabla__hoy {
   font-weight: 700;
-  color: var(--color-accent-deep);
+  color: var(--color-danger);
 }
 
 .tabla__sugerido {
   font-weight: 700;
-  color: var(--color-primary-deep);
+  color: var(--color-primary);
 }
 
+/* ---------- Responsive ---------- */
 @media (max-width: 980px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);

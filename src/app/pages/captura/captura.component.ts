@@ -1,13 +1,16 @@
-import { DatosService } from '../../services/datos.service';
-import { Component, inject } from '@angular/core';
+import { ApiService } from '../../api/api.service';
+import { Complejidad, Interpretacion } from '../../api/modelos';
+import { PedidoBorradorService } from '../../services/pedido-borrador.service';
+import { Component, OnDestroy, inject } from '@angular/core';
+import { DictadoService } from '../../services/dictado.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Complejidad, PedidoBorradorService } from '../../services/pedido-borrador.service';
 interface CampoDetectado {
   etiqueta: string;
   valor: string;
   confianza: number; // de 0 a 1
+  evidencia?: string; // el pedazo del texto del que se entendió
 }
 
 @Component({
@@ -17,7 +20,7 @@ interface CampoDetectado {
   templateUrl: './captura.component.html',
   styleUrl: './captura.component.scss',
 })
-export class CapturaComponent {
+export class CapturaComponent implements OnDestroy {
   texto = '';
   campos: CampoDetectado[] = [];
   interpretado = false;
@@ -25,33 +28,106 @@ export class CapturaComponent {
   private readonly servicio = inject(PedidoBorradorService);
   private textoInterpretado = '';
   cliente = '';
-  private readonly datos = inject(DatosService);
+  private readonly api = inject(ApiService);
+  private solicitudId: number | null = null; // la interpretación registrada en el servidor
+  private registro: Promise<void> = Promise.resolve();
+  private ia: Interpretacion | null = null; // lo que entendió el NLP; null si se usaron las reglas básicas
+  preguntas: string[] = []; // lo que falta para completar el pedido
+  avisos: string[] = [];
+  motor: 'nlp' | 'basico' = 'nlp';
+  interpretando = false;
+  private readonly dictado = inject(DictadoService);
+  readonly vozDisponible = this.dictado.soportado;
+  escuchando = false;
+  avisoVoz = '';
+  private textoAntesDeVoz = '';
 
   readonly ejemplos = [
     'Hola! Para el sábado quiero una torta de chocolate para 20 personas, temática unicornio',
-    'Necesito 24 cupcakes de vainilla para el 15 de octubre, decoración de flores',
-    'Una torta de tres leches para 30 invitados, el viernes, estilo minimalista',
+    'Necesito 24 cupcakes de vainilla para el 24 de noviembre, decoración de flores',
+    'Una torta de tres leches para 30 invitados, el domingo, estilo minimalista',
   ];
 
   private readonly sabores = ['chocolate', 'vainilla', 'fresa', 'tres leches', '3 leches', 'red velvet', 'zanahoria', 'limon', 'arequipe', 'cafe'];
   private readonly dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
   private readonly disenos = ['unicornio', 'princesa', 'superheroes', 'spiderman', 'mario', 'flores', 'minimalista', 'boda', 'bautizo'];
+  
   usarEjemplo(ejemplo: string) {
     this.texto = ejemplo;
     this.interpretar();
   }
 
-  interpretar() {
-    const t = this.normalizar(this.texto);
-    this.campos = [
-      this.detectarSabor(t, this.texto),
-      this.detectarTamano(t),
-      this.detectarFecha(t, this.texto),
-      this.detectarDiseno(t, this.texto),
-    ];
-    this.interpretado = true;
+  alternarVoz() {
+    if (this.escuchando) {
+      this.dictado.detener();
+      return;
+    }
+    this.avisoVoz = '';
+    this.textoAntesDeVoz = this.texto.trim();
+    this.escuchando = true;
+    this.dictado.iniciar({
+      alTexto: (dictado) => {
+        this.texto = this.textoAntesDeVoz ? `${this.textoAntesDeVoz} ${dictado}` : dictado;
+      },
+      alTerminar: () => (this.escuchando = false),
+      alError: (mensaje) => {
+        this.avisoVoz = mensaje;
+        this.escuchando = false;
+      },
+    });
+  }
+
+  ngOnDestroy() {
+    this.dictado.detener(); // si se cambia de pantalla, apaga el micrófono
+  }
+
+    /** Le pide al servicio de NLP que entienda el texto. Si ese servicio no responde, usa las reglas básicas de abajo. */
+  async interpretar() {
+    this.interpretando = true;
     this.textoInterpretado = this.texto;
-    this.datos.registrarInterpretacion();
+    this.solicitudId = null;
+    try {
+      const r = await this.api.interpretar(this.texto);
+      this.ia = r;
+      this.campos = r.campos;
+      this.preguntas = r.preguntas;
+      this.avisos = r.avisos;
+      this.solicitudId = r.solicitudId; // el servidor ya registró la solicitud
+      this.registro = Promise.resolve();
+      this.motor = 'nlp';
+    } catch {
+      this.ia = null;
+      this.preguntas = [];
+      this.avisos = [];
+      this.motor = 'basico';
+      this.campos = this.interpretarBasico(this.texto);
+      this.registro = this.registrarEnServidor(); // se guarda en segundo plano
+    } finally {
+      this.interpretado = true;
+      this.interpretando = false;
+    }
+  }
+
+  /** Las reglas de antes (palabras exactas): quedan como plan B para cuando el NLP no está disponible. */
+  private interpretarBasico(texto: string): CampoDetectado[] {
+    const t = this.normalizar(texto);
+    return [
+      this.detectarSabor(t, texto),
+      this.detectarTamano(t),
+      this.detectarFecha(t, texto),
+      this.detectarDiseno(t, texto),
+    ];
+  }
+
+  /** Avisa al servidor que se interpretó un texto. De ahí sale la conversión de la IA en el Panel. */
+  private async registrarEnServidor() {
+    this.solicitudId = null;
+    try {
+      const solicitud = await this.api.registrarSolicitud(this.texto, JSON.stringify(this.campos));
+      this.solicitudId = solicitud.id;
+    } catch {
+      // sin conexión: el pedido seguirá, pero sin vincularse a una interpretación
+    }
   }
 
   variante(confianza: number): string {
@@ -60,7 +136,8 @@ export class CapturaComponent {
     return 'rose';
   }
 
-  continuar() {
+  async continuar() {
+    await this.registro; // por si el registro todavía no terminó
     const t = this.normalizar(this.textoInterpretado);
     const valor = (etiqueta: string) =>
       this.campos.find((c) => c.etiqueta === etiqueta)?.valor ?? '';
@@ -71,12 +148,20 @@ export class CapturaComponent {
       sabor: valor('Sabor'),
       tamano: valor('Tamaño'),
       diseno: valor('Diseño'),
-      fecha: this.resolverFecha(t),
+      fecha: this.ia ? this.fechaDe(this.ia.pedido.fecha) : this.resolverFecha(t),
       fechaTexto: valor('Fecha de entrega'),
-      complejidad: this.calcularComplejidad(t, valor('Diseño')),
+      complejidad: this.ia ? this.ia.complejidad : this.calcularComplejidad(t, valor('Diseño')),
+      solicitudId: this.solicitudId,
+      tipo: this.ia?.pedido.tipo ?? null,
     });
 
     this.router.navigate(['/agenda']);
+  }
+
+    /** "2026-10-24" -> 24 de octubre a medianoche, hora local (new Date("2026-10-24") lo correría un día). */
+  private fechaDe(iso: string | null): Date | null {
+    const partes = iso?.split('-').map(Number);
+    return partes && partes.length === 3 ? new Date(partes[0], partes[1] - 1, partes[2]) : null;
   }
 
   private resolverFecha(t: string): Date | null {

@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { animate, style, transition, trigger } from '@angular/animations';
 
+import { ApiService } from './api/api.service';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 
 @Component({
@@ -21,6 +22,7 @@ import { SidebarComponent } from './layout/sidebar/sidebar.component';
 })
 export class AppComponent {
   title = 'reposteria';
+  readonly api = inject(ApiService);
 
   getRouteAnimationState(outlet: RouterOutlet) {
     return outlet?.activatedRouteData?.['animation'];

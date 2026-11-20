@@ -1,6 +1,12 @@
 <div class="app-shell">
   <app-sidebar></app-sidebar>
   <main class="app-content">
+    @if (api.sinConexion()) {
+      <div class="sin-conexion" role="alert">
+        <strong>Sin conexión con el servidor.</strong>
+        Revisa que la API esté corriendo (<code>dotnet run</code>) y que la dirección de <code>src/app/api/config.ts</code> sea la correcta.
+      </div>
+    }
     <div [@routeFade]="getRouteAnimationState(outlet)">
       <router-outlet #outlet="outlet"></router-outlet>
     </div>
